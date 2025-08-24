@@ -81,7 +81,7 @@ Route::middleware(['auth', 'hasPermission:1,2,3'])->prefix('admin')->group(funct
 
     Route::resource('products', ProductController::class);
 
-     Route::post('choose-location', [AdminController::class, 'chooseLocation'])->name('admin.chl');
+    Route::post('choose-location', [AdminController::class, 'chooseLocation'])->name('admin.chl');
 
 });
 
@@ -109,6 +109,8 @@ Route::middleware(['auth', 'hasPermission:1'])->prefix('super_admin')->group(fun
     Route::resource('establishments', EstablishmentController::class);
     Route::resource('roles', RoleController::class);
     Route::resource('sectors', SectorController::class);
+
+    Route::post('choose-company', [AdminController::class, 'chooseCompany'])->name('admin.chc');
 
 });
 

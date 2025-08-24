@@ -530,7 +530,6 @@
             }
             /******************************* */
 
-
             payMethod.onclick = function(ev){
                 // if(ev.target.value){
                 if(ev.target.checked){
@@ -634,11 +633,7 @@
                 $('#subtotal').html(subtotal.toFixed(2))
                 $('#igv').html(igv.toFixed(2))
             }
-
         })
-        
-
-           
     </script>
 
 @endsection
