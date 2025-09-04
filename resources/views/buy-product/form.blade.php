@@ -343,6 +343,10 @@
  
     <script>
         window.addEventListener("DOMContentLoaded", function(){
+
+            $('#product_id').select2( {
+                theme: 'bootstrap-5'
+            } );
             
             // let term = document.getElementById('term');
             let box = document.getElementById('box-search');

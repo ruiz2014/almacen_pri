@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\LocalProductController;
 use App\Http\Controllers\Tool\CommonController;
 use App\Http\Controllers\Biller\AttentionController;
 use App\Http\Controllers\Biller\SumaryController;
+use App\Http\Controllers\Biller\CreditController;
 use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\PaymentMethodController;
 
@@ -83,6 +84,7 @@ Route::middleware(['auth', 'hasPermission:1,2,3'])->prefix('admin')->group(funct
 
     Route::post('choose-location', [AdminController::class, 'chooseLocation'])->name('admin.chl');
 
+    Route::resource('credits', CreditController::class);
 });
 
 Route::middleware(['auth', 'hasPermission:1,2,5'])->prefix('almacen')->group(function () {

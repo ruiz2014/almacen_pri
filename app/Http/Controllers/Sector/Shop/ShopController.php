@@ -12,6 +12,7 @@ use App\Models\Biller\PaymentLog;
 use App\Models\Admin\LocalProduct;
 use App\Models\Biller\Attention;
 use App\Models\Biller\TempSale;
+use App\Models\Biller\CreditLog;
 use App\Models\Admin\Kardex;
 use App\Models\Admin\SuperAdmin\Company;
 
@@ -102,42 +103,48 @@ class ShopController extends Controller
             "receipt"=>"required",
             "customer_id"=>"required",
             "code"=>"required",
-            "payMethod" => "required"
+            "type_payment" => "required",
+            "payMethod" => "required_if:type_payment,1",
         ];
         // $mensajes =[
         // ]; 
-
         // $validator = Validator::make($request->all(), $campos);
-        Validator::make($request->all(), $campos)->validate(); //DEVUELVE ERROR 403
 
+        Validator::make($request->all(), $campos)->validate(); //DEVUELVE ERROR 403
 
         if (TempSale::where('company_id', $company)->where('code', $request->code)->exists()) {
 
-            $filteredArray = array_filter($request->input('payMethodVal'), function($value) {
-                return !is_null($value);
-            });
-
-            if(count($filteredArray) !== count($request->input('payMethod'))){
-               /**SI ES DIFERENTE MP CON VALUE-MP */
-               
-                // dd($total, $total_provi, $filteredArray, $request->input('payMethod'), array_combine($request->input('payMethod'), $filteredArray), $request, count($filteredArray), count($request->input('payMethod')));
-                // return redirect()->route('pay.show', ['order'=> $request->code])->with('danger', 'Elegio formas de pagos que no coninciden con monto total');
-            dd("joder1");
-            }
-    
-            $total_provi = (float)array_sum($filteredArray);
+            $combinado = [];
             $total = TempSale::select(DB::raw('SUM(price * amount) as total'))->where('code', $request->code)->value('total');
-            
-            if($total !== $total_provi){
-                /**COMPARA VALORES LE TEMP_SALE CON LOS TRAIDO EL EL ARREGLO "$filteredArray" **/
 
-                //dd($total, $total_provi, $filteredArray, $request->input('payMethod'), array_combine($request->input('payMethod'), $filteredArray), $request, count($filteredArray), count($request->input('payMethod')));
-                dd("joder2");
-                // return redirect()->route('pay.show', ['order'=> $request->code])->with('danger', 'Elegio formas de pagos que no coninciden con monto total');
+            if($request->type_payment == 1){
+
+                $filteredArray = array_filter($request->input('payMethodVal'), function($value) {
+                    return !is_null($value);
+                });
+
+                if(count($filteredArray) !== count($request->input('payMethod'))){
+                    /**SI ES DIFERENTE MP CON VALUE-MP */
+                
+                    // dd($total, $total_provi, $filteredArray, $request->input('payMethod'), array_combine($request->input('payMethod'), $filteredArray), $request, count($filteredArray), count($request->input('payMethod')));
+                    // return redirect()->route('pay.show', ['order'=> $request->code])->with('danger', 'Elegio formas de pagos que no coninciden con monto total');
+                    dd("joder1");
+                }
+        
+                $total_provi = (float)array_sum($filteredArray);
+                $total = TempSale::select(DB::raw('SUM(price * amount) as total'))->where('code', $request->code)->value('total');
+                
+                if($total !== $total_provi){
+                    /**COMPARA VALORES LE TEMP_SALE CON LOS TRAIDO EL EL ARREGLO "$filteredArray" **/
+
+                    //dd($total, $total_provi, $filteredArray, $request->input('payMethod'), array_combine($request->input('payMethod'), $filteredArray), $request, count($filteredArray), count($request->input('payMethod')));
+                    dd("joder2");
+                    // return redirect()->route('pay.show', ['order'=> $request->code])->with('danger', 'Elegio formas de pagos que no coninciden con monto total');
+                }
+
+                $combinado = array_combine($request->input('payMethod'), $filteredArray);
             }
-
-            $combinado = array_combine($request->input('payMethod'), $filteredArray);
-            
+// dd($total, $combinado);
             // dd($total, $total_provi, $filteredArray, $request->input('payMethod'), array_combine($request->input('payMethod'), $filteredArray), $request, count($filteredArray), count($request->input('payMethod')));
             $numeration = $this->setCorrelative($request->receipt); 
             $attention_id = Attention::create([
@@ -147,6 +154,7 @@ class ShopController extends Controller
                 'document_code'=>$request->code,
                 'reference _document'=>'',
                 'currency'=>1,
+                'type_payment'=>$request->type_payment,
                 'total'=>$total,
                 'seller'=>Session::get('user_id'),
                 'serie'=>1,
@@ -157,15 +165,26 @@ class ShopController extends Controller
             
             if($attention_id->id){
 
-                foreach($combinado as $key => $val){
-                    PaymentLog::create([
-                        'company_id' => $company,
-                        'local_id' => Session::get('local_id'),
-                        'attention_id'=>$attention_id->id,
-                        'method_id'=>$key,
-                        'total'=>$val
+                if($request->type_payment == 1){
+                    foreach($combinado as $key => $val){
+                        PaymentLog::create([
+                            'company_id' => $company,
+                            'local_id' => Session::get('local_id'),
+                            'attention_id'=>$attention_id->id,
+                            'method_id'=>$key,
+                            'total'=>$val
+                        ]);
+                    }
+                }else{
+                    CreditLog::create([
+                        'local_id' => $local,
+                        'company_id' =>$company,
+                        'attention_id'=> $attention_id->id,
+                        'customer_id'=>$request->customer_id,
+                        'total'=>$total,
                     ]);
                 }
+
 
                 $temps=TempSale::where('code', $request->code);
                 $product_ids = $temps->get();
@@ -186,7 +205,6 @@ class ShopController extends Controller
                         Kardex::create(['company_id' => $company, 'local_id'=>$local, 'product_id'=>$pid->product_id, 'entry'=>0, 'output'=>$pid->amount]);
                     } 
                 }
-
 
                 switch($request->receipt){
                     case '03' :

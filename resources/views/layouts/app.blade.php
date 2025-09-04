@@ -59,7 +59,7 @@
                             <li><a class="dropdown-item" href="{{ route('lp.index') }}">Productos</a></li>
                             <li><a class="dropdown-item" href="{{ route('customers.index') }}">Cliente</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">Something else here</a></li>
+                            <li><a class="dropdown-item" href="{{ route('credits.index') }}">Creditos a Pagar</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
